@@ -1,28 +1,27 @@
 import logging
-from typing import Text
-from aiogram import Bot, Dispatcher, executor, types
-from aiogram.types import ReplyKeyboardRemove, \
-    ReplyKeyboardMarkup, KeyboardButton, \
-    InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.dispatcher import FSMContext
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters.state import State, StatesGroup
+import asyncio
+from typing import Any
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command, StateFilter
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.state import State, StatesGroup
 import sqlite3
 import random
 import time
 import datetime
-from pydantic import NoneStr
 from pytz import utc
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 scheduler = AsyncIOScheduler(timezone=utc)
 scheduler.start()
 
-bot = Bot(token="7592505765:AAEQDg1_5LS0ykjGBU9yNaRhbnH-Dx5t-F4", parse_mode='html')
-dp = Dispatcher(bot, storage=MemoryStorage())
+bot = Bot(token="7592505765:AAEQDg1_5LS0ykjGBU9yNaRhbnH-Dx5t-F4", parse_mode='HTML')
+dp = Dispatcher(storage=MemoryStorage())
 
 admin = 1367827167
-coder = ID_USER # dont touch
+coder = "ID_USER"  # dont touch
 
 logging.basicConfig(filename='main.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -181,7 +180,6 @@ class database:
         self.conn.commit()
 
 
-
 db = database()
 
 async def notif_user(task_id):
@@ -206,55 +204,90 @@ for task in db.get_all_tasks():
         pass
 
 
-
-
 def ik_button(caption, callback_data):
-    return InlineKeyboardButton(caption, callback_data=callback_data)
+    return InlineKeyboardButton(text=caption, callback_data=callback_data)
 
-admin_menu = InlineKeyboardMarkup()
-admin_menu.add(ik_button('👨‍💻 Исполнители', 'executors_menu'), ik_button('🗂 Отчёты', 'reports_menu'))
-admin_menu.add(ik_button('🖍 Задачи', 'tasks_menu'))
+admin_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('👨‍💻 Исполнители', 'executors_menu'), ik_button('🗂 Отчёты', 'reports_menu')],
+    [ik_button('🖍 Задачи', 'tasks_menu')]
+])
 
 def remove_executor_button(executor_id):
-    remove_executor_button = InlineKeyboardMarkup()
-    remove_executor_button.add(ik_button('🗑 Удалить', f'remove_executor_{executor_id}'))
-    return remove_executor_button
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [ik_button('🗑 Удалить', f'remove_executor_{executor_id}')]
+    ])
 
-tasks_menu = InlineKeyboardMarkup().add(ik_button('➕ Добавить задачу', 'add_task'), ik_button('📝 Список задач', 'tasks_list'))
-finish_attachments = InlineKeyboardMarkup().add(ik_button('✅ Готово', 'finish_attachments'))
-finish_task_content_get = InlineKeyboardMarkup().add(ik_button('✅ Готово', 'finish_task_content_get'))
+tasks_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('➕ Добавить задачу', 'add_task'), ik_button('📝 Список задач', 'tasks_list')]
+])
+
+finish_attachments = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('✅ Готово', 'finish_attachments')]
+])
+
+finish_task_content_get = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('✅ Готово', 'finish_task_content_get')]
+])
 
 def user_task_active_keyboard(task_id):
-    return InlineKeyboardMarkup().add(ik_button('📩 Сдать отчёт', f'finish_task_{task_id}'), ik_button('🗒 Подробнее', f'task_more_{task_id}'))
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [ik_button('📩 Сдать отчёт', f'finish_task_{task_id}'), ik_button('🗒 Подробнее', f'task_more_{task_id}')]
+    ])
 
 def user_task_nonactive_keyboard(task_id):
-    return InlineKeyboardMarkup().add(ik_button('✅ Принять', f'accept_task_{task_id}'), ik_button('🗒 Подробнее', f'task_description_{task_id}'))
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [ik_button('✅ Принять', f'accept_task_{task_id}'), ik_button('🗒 Подробнее', f'task_description_{task_id}')]
+    ])
 
 def user_task_active_keyboard2(task_id):
-    return InlineKeyboardMarkup().add(ik_button('📩 Сдать отчёт', f'finish_task_{task_id}'))
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [ik_button('📩 Сдать отчёт', f'finish_task_{task_id}')]
+    ])
 
 def user_task_nonactive_keyboard2(task_id):
-    return InlineKeyboardMarkup().add(ik_button('✅ Принять', f'accept_task_{task_id}'))
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [ik_button('✅ Принять', f'accept_task_{task_id}')]
+    ])
 
 def report_keyboard(report_id):
-    return InlineKeyboardMarkup().add(ik_button('👀 Просмотреть', f'show_report_{report_id}'), ik_button('✅ Завершить', f'remove_report_{report_id}')).add(ik_button('❌ Отказать в принятии', f'not_accept_report_{report_id}'))
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [ik_button('👀 Просмотреть', f'show_report_{report_id}'), ik_button('✅ Завершить', f'remove_report_{report_id}')],
+        [ik_button('❌ Отказать в принятии', f'not_accept_report_{report_id}")]
+    ])
 
-executors_menu = InlineKeyboardMarkup()
-executors_menu.add(ik_button('👨‍💻 Список исполнителей', 'executors'), ik_button('🔑 Создать ключ', 'create_key'))
+executors_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('👨‍💻 Список исполнителей', 'executors'), ik_button('🔑 Создать ключ', 'create_key')],
+    [ik_button('📲 В меню', 'to_admin_menu')]
+])
 
-executors_menu.add(ik_button('📲 В меню', 'to_admin_menu'))
-
-user_menu = InlineKeyboardMarkup()
-user_menu.add(ik_button('🧾 Заказы', 'user_tasks'))
+user_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('🧾 Заказы', 'user_tasks')]
+])
 
 def remove_task(id):
-    return InlineKeyboardMarkup().add(ik_button('🗑 Удалить задачу', f'remove_task_{id}'))
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [ik_button('🗑 Удалить задачу', f'remove_task_{id}')]
+    ])
 
-cancel_admin = InlineKeyboardMarkup().add(ik_button('❌ Отмена', 'cancel_admin'))
-to_admin_menu = InlineKeyboardMarkup().add(ik_button('📲 В меню', 'to_admin_menu'))
-cancel_user = InlineKeyboardMarkup().add(ik_button('❌ Отмена', 'cancel_user'))
-to_user_menu = InlineKeyboardMarkup().add(ik_button('📲 В меню', 'to_user_menu'))
-cancel_only = InlineKeyboardMarkup().add(ik_button('❌ Отмена', 'cancel'))
+cancel_admin = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('❌ Отмена', 'cancel_admin')]
+])
+
+to_admin_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('📲 В меню', 'to_admin_menu')]
+])
+
+cancel_user = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('❌ Отмена', 'cancel_user')]
+])
+
+to_user_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('📲 В меню', 'to_user_menu')]
+])
+
+cancel_only = InlineKeyboardMarkup(inline_keyboard=[
+    [ik_button('❌ Отмена', 'cancel')]
+])
 
 class create_key_states(StatesGroup):
     categories = State()
