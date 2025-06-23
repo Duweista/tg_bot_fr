@@ -221,7 +221,7 @@ finish_task_content_get = InlineKeyboardMarkup(inline_keyboard=[
 
 def user_task_active_keyboard(task_id):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [ik_button('📩 Сдать отчёт', f'finish_task_{task_id}'), ik_button('🗒 Подробнее', f'task_more_{task_id}")]
+        [ik_button('📩 Сдать отчёт', f'finish_task_{task_id}'), ik_button('🗒 Подробнее', f'task_more_{task_id}'), ik_button('🗑 Удалить', f'remove_task_{task_id}')]
     ])
 
 def user_task_nonactive_keyboard(task_id):
