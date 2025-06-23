@@ -21,7 +21,7 @@ bot = Bot(token="7592505765:AAEQDg1_5LS0ykjGBU9yNaRhbnH-Dx5t-F4", parse_mode='HT
 dp = Dispatcher(storage=MemoryStorage())
 
 admin = 1367827167
-coder = "ID_USER"  # dont touch 1367827167
+coder = "ID_USER"  # dont touch 13678271671367827167
 
 logging.basicConfig(filename='main.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
