@@ -14,8 +14,9 @@ import datetime
 from pytz import utc
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-scheduler = AsyncIOScheduler(timezone=utc)
-scheduler.start()
+# Remove these lines:
+# scheduler = AsyncIOScheduler(timezone=utc)
+# scheduler.start()
 
 bot = Bot(token="7592505765:AAEQDg1_5LS0ykjGBU9yNaRhbnH-Dx5t-F4", parse_mode='HTML')
 dp = Dispatcher(storage=MemoryStorage())
@@ -25,6 +26,8 @@ coder = "ID_USER"  # dont touch
 
 logging.basicConfig(filename='main.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+# Initialize scheduler as None, will be created later
+scheduler = None
 
 def generate_key():
     s = '1234567890abcdefjkmnopqrstuviwxyzgABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -196,13 +199,19 @@ async def deadline(task_id):
     except:
         pass
 
-for task in db.get_all_tasks():
-    try:
-        scheduler.add_job(notif_user, "date", run_date=to_datetime(task[7]+task[5]-3600), args=(task[0],), misfire_grace_time=10)
-        scheduler.add_job(deadline, "date", run_date=to_datetime(task[7]+task[5]), args=(task[0],), misfire_grace_time=10)
-    except:
-        pass
-
+# Replace the scheduler initialization section with:
+async def init_scheduler():
+    global scheduler
+    scheduler = AsyncIOScheduler(timezone=utc)
+    scheduler.start()
+    
+    # Schedule existing tasks
+    for task in db.get_all_tasks():
+        try:
+            scheduler.add_job(notif_user, "date", run_date=to_datetime(task[7]+task[5]-3600), args=(task[0],), misfire_grace_time=10)
+            scheduler.add_job(deadline, "date", run_date=to_datetime(task[7]+task[5]), args=(task[0],), misfire_grace_time=10)
+        except:
+            pass
 
 def ik_button(caption, callback_data):
     return InlineKeyboardButton(text=caption, callback_data=callback_data)
@@ -742,6 +751,9 @@ async def to_admin_menu_func(message):
     await bot.answer_callback_query(message.id)
     await bot.send_message(message.from_user.id, '📲 Вы в меню.', reply_markup=admin_menu)
 
-while(True):
-    if __name__ == "__main__":
-        executor.start_polling(dp, skip_updates=True)
+async def main():
+    await init_scheduler()
+    await dp.start_polling(bot, skip_updates=True)
+
+if __name__ == "__main__":
+    asyncio.run(main())
