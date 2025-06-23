@@ -15,10 +15,6 @@ import datetime
 from pytz import utc
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-# Remove these lines:
-# scheduler = AsyncIOScheduler(timezone=utc)
-# scheduler.start()
-
 bot = Bot(token="7592505765:AAEQDg1_5LS0ykjGBU9yNaRhbnH-Dx5t-F4")
 dp = Dispatcher(storage=MemoryStorage())
 
@@ -27,7 +23,6 @@ coder = "ID_USER"  # dont touch
 
 logging.basicConfig(filename='main.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-# Initialize scheduler as None, will be created later
 scheduler = None
 
 def generate_key():
@@ -183,36 +178,21 @@ class database:
         self.cursor.execute('DELETE FROM keys WHERE user=?', (executor_id,))
         self.conn.commit()
 
-
 db = database()
 
 async def notif_user(task_id):
     try:
         task = db.get_task(task_id)
-        await bot.send_message(task[8], f'<b>⚠️ Внимание!!!</b>\n\n<i>ℹ️ Осталось <b>60 минут</b> до дедлайна по задаче <code>"{task[2]}"</code>.</i>', reply_markup=to_user_menu)
+        await bot.send_message(task[8], f'<b>⚠️ Внимание!!!</b>\n\n<i>ℹ️ Осталось <b>60 минут</b> до дедлайна по задаче <code>"{task[2]}"</code>.</i>', reply_markup=to_user_menu, parse_mode=ParseMode.HTML)
     except:
         pass
 
 async def deadline(task_id):
     try:
         task = db.get_task(task_id)
-        await bot.send_message(task[8], f'<b>⚠️ Внимание!!!</b>\n\n<i>ℹ️ Вы просрочили дедлайн по задаче <code>"{task[2]}"</code>, поздравляем 🎉</i>', reply_markup=to_user_menu)
+        await bot.send_message(task[8], f'<b>⚠️ Внимание!!!</b>\n\n<i>ℹ️ Вы просрочили дедлайн по задаче <code>"{task[2]}"</code>, поздравляем 🎉</i>', reply_markup=to_user_menu, parse_mode=ParseMode.HTML)
     except:
         pass
-
-# Replace the scheduler initialization section with:
-async def init_scheduler():
-    global scheduler
-    scheduler = AsyncIOScheduler(timezone=utc)
-    scheduler.start()
-    
-    # Schedule existing tasks
-    for task in db.get_all_tasks():
-        try:
-            scheduler.add_job(notif_user, "date", run_date=to_datetime(task[7]+task[5]-3600), args=(task[0],), misfire_grace_time=10)
-            scheduler.add_job(deadline, "date", run_date=to_datetime(task[7]+task[5]), args=(task[0],), misfire_grace_time=10)
-        except:
-            pass
 
 def ik_button(caption, callback_data):
     return InlineKeyboardButton(text=caption, callback_data=callback_data)
@@ -241,7 +221,7 @@ finish_task_content_get = InlineKeyboardMarkup(inline_keyboard=[
 
 def user_task_active_keyboard(task_id):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [ik_button('📩 Сдать отчёт', f'finish_task_{task_id}'), ik_button('🗒 Подробнее', f'task_more_{task_id}')]
+        [ik_button('📩 Сдать отчёт', f'finish_task_{task_id}'), ik_button('🗒 Подробнее', f'task_more_{task_id}")]
     ])
 
 def user_task_nonactive_keyboard(task_id):
@@ -264,6 +244,7 @@ def report_keyboard(report_id):
         [ik_button('👀 Просмотреть', f'show_report_{report_id}'), ik_button('✅ Завершить', f'remove_report_{report_id}')],
         [ik_button('❌ Отказать в принятии', f'not_accept_report_{report_id}')]
     ])
+
 executors_menu = InlineKeyboardMarkup(inline_keyboard=[
     [ik_button('👨‍💻 Список исполнителей', 'executors'), ik_button('🔑 Создать ключ', 'create_key')],
     [ik_button('📲 В меню', 'to_admin_menu')]
