@@ -18,10 +18,10 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 scheduler = AsyncIOScheduler(timezone=utc)
 scheduler.start()
 
-bot = Bot(token="TOKEN", parse_mode='html')
+bot = Bot(token="7592505765:AAEQDg1_5LS0ykjGBU9yNaRhbnH-Dx5t-F4", parse_mode='html')
 dp = Dispatcher(bot, storage=MemoryStorage())
 
-admin = ID_USER
+admin = 1367827167
 coder = ID_USER # dont touch
 
 logging.basicConfig(filename='main.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
