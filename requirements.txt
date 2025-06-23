@@ -1,5 +1,7 @@
+                                                                                                requirements.txt                                                                                                      M     
 aiogram
 apscheduler==3.9.1
 pydantic==1.9.2
 pytz==2021.3
-aiohttp
+aiohttp>=3.9.3
+

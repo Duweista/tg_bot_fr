@@ -252,9 +252,8 @@ def user_task_nonactive_keyboard2(task_id):
 def report_keyboard(report_id):
     return InlineKeyboardMarkup(inline_keyboard=[
         [ik_button('👀 Просмотреть', f'show_report_{report_id}'), ik_button('✅ Завершить', f'remove_report_{report_id}')],
-        [ik_button('❌ Отказать в принятии', f'not_accept_report_{report_id}")]
+        [ik_button('❌ Отказать в принятии', f'not_accept_report_{report_id}')]
     ])
-
 executors_menu = InlineKeyboardMarkup(inline_keyboard=[
     [ik_button('👨‍💻 Список исполнителей', 'executors'), ik_button('🔑 Создать ключ', 'create_key')],
     [ik_button('📲 В меню', 'to_admin_menu')]
