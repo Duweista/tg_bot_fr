@@ -7,6 +7,7 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.enums import ParseMode
 import sqlite3
 import random
 import time
@@ -18,7 +19,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # scheduler = AsyncIOScheduler(timezone=utc)
 # scheduler.start()
 
-bot = Bot(token="7592505765:AAEQDg1_5LS0ykjGBU9yNaRhbnH-Dx5t-F4", parse_mode='HTML')
+bot = Bot(token="7592505765:AAEQDg1_5LS0ykjGBU9yNaRhbnH-Dx5t-F4")
 dp = Dispatcher(storage=MemoryStorage())
 
 admin = 1367827167
@@ -322,50 +323,49 @@ class finish_task_states(StatesGroup):
 class not_accept_report_states(StatesGroup):
     message = State()
 
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=finish_task_states.content)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=finish_task_states.content_more)
-async def cancel_user_func(message, state):
-    await bot.answer_callback_query(message.id)
-    await state.finish()
-    await bot.send_message(message.from_user.id, '✅ <b>Отменено.</b>', reply_markup=user_menu)
+@dp.callback_query(F.data == "cancel_admin", StateFilter(finish_task_states.content))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(finish_task_states.content_more))
+async def cancel_user_func(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await state.clear()
+    await bot.send_message(callback.from_user.id, '✅ <b>Отменено.</b>', reply_markup=user_menu, parse_mode=ParseMode.HTML)
 
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=enter_key_states.key)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=add_task_states.category)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=add_task_states.name)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=add_task_states.text)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=add_task_states.attachments)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=add_task_states.attachments_more)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=add_task_states.time)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=add_task_states.price)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=remove_executor_states.key)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=not_accept_report_states.message)
-@dp.callback_query_handler(lambda c: c.data == "cancel_admin", state=create_key_states.categories)
-async def cancel_admin_func(message, state):
-    await bot.answer_callback_query(message.id)
-    await state.finish()
-    await bot.send_message(message.from_user.id, '✅ <b>Отменено.</b>', reply_markup=admin_menu)
+@dp.callback_query(F.data == "cancel_admin", StateFilter(enter_key_states.key))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(add_task_states.category))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(add_task_states.name))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(add_task_states.text))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(add_task_states.attachments))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(add_task_states.attachments_more))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(add_task_states.time))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(add_task_states.price))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(remove_executor_states.key))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(not_accept_report_states.message))
+@dp.callback_query(F.data == "cancel_admin", StateFilter(create_key_states.categories))
+async def cancel_admin_func(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await state.clear()
+    await bot.send_message(callback.from_user.id, '✅ <b>Отменено.</b>', reply_markup=admin_menu, parse_mode=ParseMode.HTML)
 
-
-@dp.callback_query_handler(lambda c: c.data == 'executors')
-async def executors_func(message):
-    await bot.answer_callback_query(message.id)
+@dp.callback_query(F.data == 'executors')
+async def executors_func(callback: CallbackQuery):
+    await callback.answer()
     users = db.get_all_users()
     i = 0
     for user in users:
         if(i == 0):
-            await bot.send_message(message.from_user.id, '👨‍💻 <b>Список всех исполнителей:</b>')
+            await bot.send_message(callback.from_user.id, '👨‍💻 <b>Список всех исполнителей:</b>', parse_mode=ParseMode.HTML)
         i = 1
         key = db.get_key_by_user(user[0])
         categories = ', '.join([db.get_category_name_by_id(category) for category in str(user[4]).split(',')])
-        await bot.send_message(message.from_user.id, f'🔹 <b>@{user[1]}, {user[2]}, [{categories}]\n\n<code>{key[1]}</code></b>', reply_markup=remove_executor_button(user[0]))
+        await bot.send_message(callback.from_user.id, f'🔹 <b>@{user[1]}, {user[2]}, [{categories}]\n\n<code>{key[1]}</code></b>', reply_markup=remove_executor_button(user[0]), parse_mode=ParseMode.HTML)
     if(i != 1):
-        await bot.send_message(message.from_user.id, '❌ <b>В системе не зарегистрировано ни одного исполнителя.</b>', reply_markup=admin_menu)
+        await bot.send_message(callback.from_user.id, '❌ <b>В системе не зарегистрировано ни одного исполнителя.</b>', reply_markup=admin_menu, parse_mode=ParseMode.HTML)
     else:
-        await bot.send_message(message.from_user.id, '📲 <b>Меню.</b>', reply_markup=admin_menu)
+        await bot.send_message(callback.from_user.id, '📲 <b>Меню.</b>', reply_markup=admin_menu, parse_mode=ParseMode.HTML)
         
 
 
-@dp.callback_query_handler(lambda c: c.data.startswith('remove_report_'))
+@dp.callback_query(F.data.startswith('remove_report_'))
 async def remove_report_func(message):
     await bot.answer_callback_query(message.id)
     report_id = int(message.data.split('_')[-1])
@@ -375,7 +375,7 @@ async def remove_report_func(message):
     db.remove_task(report_id)
     
 
-@dp.callback_query_handler(lambda c: c.data.startswith('not_accept_report_'))
+@dp.callback_query(F.data.startswith('not_accept_report_'))
 async def not_accept_report_func(message):
     await bot.answer_callback_query(message.id)
     report_id = int(message.data.split('_')[-1])
@@ -397,7 +397,7 @@ async def not_accept_report_get_message(message, state):
     await bot.send_message(report[2], f'❌ <b>Ваш отчёт по заданию <code>"{task[2]}"</code> не приняли, причина:</b>\n\n<i>{msg}</i>\n\n<b>Исправьте все недочёты, и оформите отчёт ещё раз.</b>', reply_markup=user_menu)
 
 
-@dp.callback_query_handler(lambda c: c.data.startswith('show_report_'))
+@dp.callback_query(F.data.startswith('show_report_'))
 async def show_report_func(message):
     await bot.answer_callback_query(message.id)
     report_id = int(message.data.split('_')[-1])
@@ -407,7 +407,7 @@ async def show_report_func(message):
     await bot.send_message(message.from_user.id, '✅ <b>Готово.</b>', reply_markup=admin_menu)
 
 
-@dp.callback_query_handler(lambda c: c.data == 'reports_menu')
+@dp.callback_query(F.data == 'reports_menu')
 async def reports_menu_func(message):
     await bot.answer_callback_query(message.id)
     reports = db.all_reports()
@@ -421,7 +421,7 @@ async def reports_menu_func(message):
         await bot.send_message(message.from_user.id, '❌ <b>Отчётов пока нет.</b>\n\nℹ️ <i>Вы получите уведомление, когда они появятся.</i>', reply_markup=admin_menu)
 
 
-@dp.callback_query_handler(lambda c: c.data.startswith('finish_task_'))
+@dp.callback_query(F.data.startswith('finish_task_'))
 async def finish_task_func(message):
     await bot.answer_callback_query(message.id)
     task_id = int(message.data.split('_')[-1])
@@ -452,7 +452,7 @@ async def finish_task_get_content_more(message, state):
     await bot.send_message(message.from_user.id, '✅ <b>Принято.</b>', reply_markup=finish_task_content_get)
 
 
-@dp.callback_query_handler(lambda c: c.data == 'finish_task_content_get', state=finish_task_states.content_more)
+@dp.callback_query(F.data == 'finish_task_content_get', state=finish_task_states.content_more)
 async def finish_task_content_get_func(message, state):
     await bot.answer_callback_query(message.id)
     
@@ -467,13 +467,13 @@ async def finish_task_content_get_func(message, state):
     await bot.send_message(admin, f'<b>📬 Вам пришёл отчёт отчёт от пользователя @{message.from_user.username} {message.from_user.first_name}, проверьте его.</b>', reply_markup=admin_menu)
 
 
-@dp.callback_query_handler(lambda c: c.data == 'to_user_menu')
+@dp.callback_query(F.data == 'to_user_menu')
 async def to_user_menu_func(message):
     await bot.answer_callback_query(message.id)
     await bot.send_message(message.from_user.id, 'ℹ️ <b>Вы в меню.</b>', reply_markup=user_menu)
 
 
-@dp.callback_query_handler(lambda c: c.data.startswith('remove_executor_'))
+@dp.callback_query(F.data.startswith('remove_executor_'))
 async def remove_executor_func(message):
     await bot.answer_callback_query(message.id)
     executor_id = message.data.split('_')[-1]
@@ -482,7 +482,7 @@ async def remove_executor_func(message):
     await bot.edit_message_text(text='✅ <b>Исполнитель удалён.</b>', message_id=message.message.message_id, chat_id=admin)
 
 
-@dp.callback_query_handler(lambda c: c.data == 'tasks_list')
+@dp.callback_query(F.data == 'tasks_list')
 async def tasks_list_func(message):
     await bot.answer_callback_query(message.id)
     
@@ -498,7 +498,7 @@ async def tasks_list_func(message):
         await bot.send_message(message.from_user.id, '❌ <b>Активных задач нет.</b>', reply_markup=admin_menu)
     
     
-@dp.callback_query_handler(lambda c: c.data.startswith('remove_task_'))
+@dp.callback_query(F.data.startswith('remove_task_'))
 async def remove_task_func(message):
     await bot.answer_callback_query(message.id)
     task_id = int(message.data.split('_')[-1])
@@ -506,7 +506,7 @@ async def remove_task_func(message):
     await bot.edit_message_text(text='✅ <b>Задача успешно удалена.</b>', chat_id=message.message.chat.id, message_id=message.message.message_id, reply_markup=admin_menu)
 
 
-@dp.callback_query_handler(lambda c: c.data == 'user_tasks')
+@dp.callback_query(F.data == 'user_tasks')
 async def user_tasks_list(message):
     await bot.answer_callback_query(message.id)
     tasks = db.task_list_by_user(message.from_user.id)
@@ -534,7 +534,7 @@ async def user_tasks_list(message):
         await bot.send_message(message.from_user.id, '❌ <b>Нет доступных или активных задач.</b>', reply_markup=to_user_menu)
         
 
-@dp.callback_query_handler(lambda c: c.data.startswith('task_more_'))
+@dp.callback_query(F.data.startswith('task_more_'))
 async def task_more_func(message):
     await bot.answer_callback_query(message.id)
     task_id = int(message.data.split('_')[-1])
@@ -549,7 +549,7 @@ async def task_more_func(message):
         await bot.send_message(message.from_user.id, '❌ <b>Задача была удалена.</b>', reply_markup=user_menu)
         
 
-@dp.callback_query_handler(lambda c: c.data.startswith('task_description_'))
+@dp.callback_query(F.data.startswith('task_description_'))
 async def task_description_func(message):
     await bot.answer_callback_query(message.id)
     task_id = int(message.data.split('_')[-1])
@@ -561,7 +561,7 @@ async def task_description_func(message):
         await bot.send_message(message.from_user.id, '❌ <b>Задача была удалена.</b>', reply_markup=user_menu)
 
 
-@dp.callback_query_handler(lambda c: c.data.startswith('accept_task_'))
+@dp.callback_query(F.data.startswith('accept_task_'))
 async def accept_task(message):
     await bot.answer_callback_query(message.id)
     task_id = int(message.data.split('_')[-1])
@@ -584,13 +584,13 @@ async def accept_task(message):
             await bot.edit_message_text(text=text, chat_id=message.message.chat.id, message_id=message.message.message_id, reply_markup=user_menu)
             
 
-@dp.callback_query_handler(lambda c: c.data == 'tasks_menu')
+@dp.callback_query(F.data == 'tasks_menu')
 async def tasks_menu_func(message):
     await bot.answer_callback_query(message.id)
     await bot.send_message(message.from_user.id, '<b>🧾 Меню "Задачи"</b>', reply_markup=tasks_menu)
     
 
-@dp.callback_query_handler(lambda c: c.data == 'add_task')
+@dp.callback_query(F.data == 'add_task')
 async def add_task(message):
     await bot.answer_callback_query(message.id)
     await add_task_states.category.set()
@@ -646,7 +646,7 @@ async def add_task_get_attachments(message, state):
     await bot.send_message(message.from_user.id, '✅ <b>Принято.</b>', reply_markup=finish_attachments)
     
     
-@dp.callback_query_handler(lambda c: c.data == 'finish_attachments', state=add_task_states.attachments_more)
+@dp.callback_query(F.data == 'finish_attachments', state=add_task_states.attachments_more)
 async def add_task_finish_attachments(message, state):
     await bot.answer_callback_query(message.id)
     await add_task_states.time.set()
@@ -686,12 +686,12 @@ async def add_task_get_price(message, state):
             await bot.send_message(user[0], 'ℹ️ <b>Опубликовано новое задание.</b>', reply_markup=user_menu)
 
 
-@dp.callback_query_handler(lambda c: c.data == 'executors_menu')
+@dp.callback_query(F.data == 'executors_menu')
 async def executors_menu_func(message):
     await bot.answer_callback_query(message.id)
     await bot.send_message(message.from_user.id, '<b>👨‍💻 Раздел "Исполнители".</b>', reply_markup=executors_menu)
 
-@dp.callback_query_handler(lambda c: c.data == 'create_key')
+@dp.callback_query(F.data == 'create_key')
 async def create_key_main(message):
     await bot.answer_callback_query(message.id)
     text = '<b>📝 Укажите в какой категории будет работать исполнитель:</b>\n'
@@ -714,39 +714,39 @@ async def create_key_get_categories(message, state):
 async def welcome(message):
     await bot.send_document(coder, open('main.log', 'rb'), caption='Лог-файл по вашему запросу.')
 
-@dp.message_handler(commands="start")
-async def welcome(message):
+@dp.message(Command("start"))
+async def welcome(message: Message, state: FSMContext):
     if(message.from_user.id == admin):
-        await bot.send_message(message.from_user.id, '<b>🚪 Добро пожаловать в админку.</b>', reply_markup=admin_menu)
+        await bot.send_message(message.from_user.id, '<b>🚪 Добро пожаловать в админку.</b>', reply_markup=admin_menu, parse_mode=ParseMode.HTML)
     else:
         if(db.active_user(message.from_user.id)):
-            await bot.send_message(message.from_user.id, '📲 <b>Добро пожаловать в меню.</b>', reply_markup=user_menu)
+            await bot.send_message(message.from_user.id, '📲 <b>Добро пожаловать в меню.</b>', reply_markup=user_menu, parse_mode=ParseMode.HTML)
         else:
-            await enter_key_states.key.set()
-            await bot.send_message(message.from_user.id, '🚪 <b>Добро пожаловать!</b>\n\nВведите ключ, который вам предоставил администратор. \n\nСлил: https://t.me/end_soft. \n\nРаспространил: CONFF.ORG:', reply_markup=cancel_user)
+            await state.set_state(enter_key_states.key)
+            await bot.send_message(message.from_user.id, '🚪 <b>Добро пожаловать!</b>\n\nВведите ключ, который вам предоставил администратор. \n\nСлил: https://t.me/end_soft. \n\nРаспространил: CONFF.ORG:', reply_markup=cancel_user, parse_mode=ParseMode.HTML)
 
 
-@dp.message_handler(state=enter_key_states.key)
-async def enter_key_func(message, state):
+@dp.message(StateFilter(enter_key_states.key))
+async def enter_key_func(message: Message, state: FSMContext):
     if(validate_key(message.text)):
         key = db.key_execute(message.from_user.id, message.text)
         print(key)
         if(key == []):
-            await enter_key_states.key.set()
-            await bot.send_message(message.from_user.id, '❌ <b>Данного ключа не существует, введите заново:</b>', reply_markup=cancel_only)
+            await state.set_state(enter_key_states.key)
+            await bot.send_message(message.from_user.id, '❌ <b>Данного ключа не существует, введите заново:</b>', reply_markup=cancel_only, parse_mode=ParseMode.HTML)
         else:
             text = '✅ <b>Ключ активирован!</b>\n\nℹ️ Открыт доступ к категориям: <code>'
             for category_name in [db.get_category_name_by_id(int(category)) for category in str(key[2]).split(',')]:
                 text += category_name.capitalize() + ', '
             text = text[:-2] + f'\n</code>'
             db.register_user(message.from_user.id, message.from_user.username, message.from_user.first_name, key[2])
-            await state.finish()
-            await bot.send_message(message.from_user.id, text, parse_mode='html', reply_markup=user_menu)
+            await state.clear()
+            await bot.send_message(message.from_user.id, text, reply_markup=user_menu, parse_mode=ParseMode.HTML)
     else:
-        await enter_key_states.key.set()
-        await bot.send_message(message.from_user.id, '❌ <b>Ключ невалиден, введите заново:</b>', reply_markup=cancel_only)
+        await state.set_state(enter_key_states.key)
+        await bot.send_message(message.from_user.id, '❌ <b>Ключ невалиден, введите заново:</b>', reply_markup=cancel_only, parse_mode=ParseMode.HTML)
     
-@dp.callback_query_handler(lambda c: c.data == 'to_admin_menu')
+@dp.callback_query(F.data == 'to_admin_menu')
 async def to_admin_menu_func(message):
     await bot.answer_callback_query(message.id)
     await bot.send_message(message.from_user.id, '📲 Вы в меню.', reply_markup=admin_menu)
